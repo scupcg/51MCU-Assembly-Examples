@@ -1,0 +1,27 @@
+;将20H单元内的2位十六进制数转换成对应的ASCII码,并将转换结果保存在21H,22H两个单元中.
+;例,#7FH转换成ASCII码"7"和ASCII码"F".
+
+ORG 0000H
+AJMP MAIN
+ORG 0050H
+MAIN:	MOV   SP, #3FH; 设置Stack Pointer
+  	PUSH  20H; 十六进制数入栈
+	LCALL H2ASC; 调用转换子程序
+	POP    21H; 第一位转换结果送21H
+	MOV   A,	20H; 再取原十六进制数
+	SWAP  A; 交换高低半字节
+	PUSH   ACC; 交换后的十六进制数入栈
+	LCALL   H2ASC; 再次调用转换子程序
+	POP      22H; 第二位转换结果送22H单元
+H2ASC:   DEC	SP;
+	DEC	SP;
+	POP	ACC; 取出转换数据
+	ANL	A, #0FH; 屏蔽高4位
+	ADD	A, #07H; 修改变址寄存器内容
+	MOVC	A. @A+PC; 查表
+	PUSH	ACC; 查表结果入栈
+	INC	SP;
+	INC	SP;
+	RET	    ;子程序返回
+ASCTAB:  DB "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F"; ASCII码表			
+          
