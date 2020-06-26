@@ -1,0 +1,20 @@
+;片内RAM 20H~27H单元存放8个无符号8位二进制数,找出其中的最大值.
+;将最终找到的最大值放在 3BH 单元
+
+ORG	0000H
+AJMP	MAIN
+ORG	0050H
+MAIN:	MOV R0, #20H; 数据区首地址
+	MOV R7, #08H; 数据区长度
+	MOV A, @R0; 读第一个数
+LOOP:	INC R0;
+	MOV R6, @R0; 读下一个数
+	CJNE A, R6, CHECK
+	SJMP LOOP1
+CHECK:	JNC LOOP1; A值大,跳转
+	MOV A, @R0; 大数送A
+LOOP1:	DJNZ R7, LOOP; 继续比较
+	MOV 3BH, A; 最终最大值送3BH单元
+	END
+
+	
