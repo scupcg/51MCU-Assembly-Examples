@@ -1,0 +1,126 @@
+;Author: PanChuguang	Institute: SCU
+
+;对"独立按键的按键次数进行计数"
+;8个独立按键的计数值采用16进制分别显示在8个"共阴极数码管"
+;每位计数值溢出时,控制蜂鸣器报警
+
+;8个独立按键连接P1口,P0口连接数码管的段选端口
+;P2.0, P2.1, P2.2分别连接译码器的A, B, C口
+;P3.7连接蜂鸣器
+;每个独立按键的计数值分别存放在内部RAM的30H~37H单元
+
+ORG	0000H
+AJMP	MAIN
+ORG	0040H
+MAIN:	
+	MOV SP, #50H; 初始化堆栈指针
+KEYSCAN:
+	LCALL DISPALY; 数码管动态显示
+	MOV A, P1; 读取按键状态
+	XRL A, #0FFH; 判断是否某个按键按下
+	JZ KEYSCAN; 没有按键按下,继续扫描
+	LCALL DELAY; 延迟10ms消除抖动
+	MOV A, P1; 继续读取
+	XRL A, #0FFH; 判断是否每个按键按下
+	JZ KEYSCAN; 没有按键按下,继续扫描
+	MOV R2, A; 保存按键状态,用于后续处理
+WAIT:
+	LCALL DISPALY
+	MOV A, P1; 读取按键状态
+	XRL A, #0FFH; 判断是否释放
+	JNZ WAIT; 未释放,继续等待
+	LCALL DELAY; 延迟消除抖动
+	MOV A, P1; 读取按键状态
+	XRL A, #0FFH; 判断是否释放
+	JNZ WAIT; 未释放,继续等待
+KEY0:
+	CJNE R2, #01H, KEY1; 是否为KEY0按下
+	INC 30H; KEY0计数值加1
+	MOV A, 30H; 
+	CJNE A, #10H, KEYSCAN; 判断是否溢出#10H=16
+	MOV 30H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN	
+KEY1:
+	CJNE R2, #02H, KEY2; 是否为KEY1按下
+	INC 31H; KEY1的计数值加1
+	MOV A, 31H;
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 31H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+KEY2:
+	CJNE R2, #04H, KEY3; 是否为KEY2按下
+	INC 32H; KEY2的计数值加1
+	MOV A, 32H; 
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 32H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+KEY3:
+	CJNE R2, #08H, KEY4; 是否为KEY3按下
+	INC 33H; KEY3的计数器加1
+	MOV A, 33H; 
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 33H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+KEY4:
+	CJNE R2, #10H, KEY5; 是否为KEY4按下
+	INC 34H; KEY4的计数器加1
+	MOV A, 34H;
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 34H, #00H; 溢出则清零 
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+KEY5:
+	CJNE R2, #20H, KEY6; 是否为KEY5按下
+	INC 35H; KEY5的计数值加1
+	MOV A, 35H; 
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 35H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+KEY6:
+	CJNE R2, #40H, KEY7; 是否为KEY6按下
+	INC 36H; KEY6的计数值加1
+	MOV A, 36H; 
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 36H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+KEY7:
+	INC 37H; KEY7的计数值加1
+	MOV A, 37H;
+	CJNE A, #10H, KEYSCAN; 判断是否溢出
+	MOV 37H, #00H; 溢出则清零
+	CLR P3.7; 蜂鸣器报警
+	LJMP KEYSCAN
+DISPALY:
+	MOV R7, #08H; 需要显示8位
+	MOV R0, #30H; 显示数据区首地址
+	MOV P2, #00H; 数码管位选
+	MOV DPTR, #TAB; 共阴极段码表
+LOOP:
+	MOV A, @R0;
+	MOVC A, @A+DPTR;
+	MOV P0, A;
+	LCALL DELAY
+	MOV P0, #00H;
+	INC R0;
+	INC P2;
+	DJNZ R7, LOOP;
+	RET
+DELAY:
+	MOV R4, #0C8H
+LOOP1:	MOV R5, #30H
+	DJNZ R5, $
+	DJNZ R4, LOOP1
+	RET
+TAB:
+       DB	3FH, 06H, 5BH,  4FH
+       DB	66H, 6DH, 7DH, 07H
+       DB	7FH, 6FH,  77H, 7CH
+       DB	39H, 5EH, 79H,  71H
+	
+	
